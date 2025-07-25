@@ -3,6 +3,8 @@
 
 const mongoose = require('mongoose');
 
+const mongoose = require('mongoose');
+
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/seminar_registration';
 
