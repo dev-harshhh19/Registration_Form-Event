@@ -4,7 +4,7 @@ import {
   FaUsers, FaDownload, FaSearch, FaTrash, 
   FaSignOutAlt, FaUser, FaEnvelope,
   FaCalendar, FaEye, FaTimes, FaMapMarkerAlt,
-  FaClock, FaEdit, FaLock, FaChevronDown,
+  FaClock, FaEdit, FaChevronDown,
   FaChevronUp, FaCog, FaUserShield
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
