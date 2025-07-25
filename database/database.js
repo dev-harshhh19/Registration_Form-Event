@@ -253,9 +253,48 @@ const dbOperations = {
         return await registration.save();
     },
 
-    // Get all registrations
-    getAllRegistrations: async () => {
-        return await Registration.find({ status: 'active' }).sort({ registrationDate: -1 });
+    // Get all registrations (with search, pagination, and sorting)
+    getAllRegistrations: async (search = '', limit = 10, offset = 0, sortBy = 'registrationDate', sortOrder = 'desc') => {
+        const query = { status: 'active' };
+        if (search) {
+            query.$or = [
+                { fullName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } },
+                { branch: { $regex: search, $options: 'i' } }
+            ];
+        }
+        return await Registration.find(query)
+            .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+            .skip(offset)
+            .limit(limit);
+    },
+
+    // Get total count of registrations (with search)
+    getRegistrationsCount: async (search = '') => {
+        const query = { status: 'active' };
+        if (search) {
+            query.$or = [
+                { fullName: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } },
+                { phone: { $regex: search, $options: 'i' } },
+                { branch: { $regex: search, $options: 'i' } }
+            ];
+        }
+        return await Registration.countDocuments(query);
+    },
+
+    // Get recent registrations (last 7 days)
+    getRecentRegistrations: async () => {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        return await Registration.aggregate([
+            { $match: { registrationDate: { $gte: sevenDaysAgo }, status: 'active' } },
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$registrationDate" } }, count: { $sum: 1 } } },
+            { $project: { date: '$_id', count: 1, _id: 0 } },
+            { $sort: { date: -1 } }
+        ]);
     },
 
     // Get registration by ID
