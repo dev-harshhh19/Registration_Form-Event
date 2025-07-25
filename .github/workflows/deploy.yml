@@ -1,0 +1,78 @@
+name: Node.js CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install Backend Dependencies
+      run: npm install
+
+    - name: Install Frontend Dependencies
+      run: npm install --prefix frontend
+
+    - name: Build Frontend
+      run: npm run build --prefix frontend
+
+    - name: Create .env file
+      run: |
+        echo "NODE_ENV=production" >> .env
+        echo "PORT=${{ secrets.PORT }}" >> .env
+        echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+        echo "ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}" >> .env
+        echo "ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}" >> .env
+        echo "EMAIL_ENABLED=${{ secrets.EMAIL_ENABLED }}" >> .env
+        echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env
+        echo "RECAPTCHA_SECRET_KEY=${{ secrets.RECAPTCHA_SECRET_KEY }}" >> .env
+        echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
+        echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
+        echo "SMTP_SECURE=${{ secrets.SMTP_SECURE }}" >> .env
+        echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
+        echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
+        echo "WHATSAPP_NUMBER=${{ secrets.WHATSAPP_NUMBER }}" >> .env
+        echo "WHATSAPP_GROUP_LINK=${{ secrets.WHATSAPP_GROUP_LINK }}" >> .env
+      
+    - name: Archive Production Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: production-build
+        path: |
+          ./
+          !frontend/
+          frontend/build/
+
+    # --- Deployment Step ---
+    # The following is a placeholder. You would replace this with commands
+    # for your specific hosting provider (e.g., Heroku, Vercel, AWS).
+    - name: Deploy to a Server (Example)
+      run: |
+        echo "Deployment step would go here."
+        echo "You would typically use a tool like scp, rsync, or a provider-specific CLI."
+        # For example, to deploy to a server via SSH:
+        # - name: Deploy to Server
+        #   uses: appleboy/ssh-action@master
+        #   with:
+        #     host: ${{ secrets.SSH_HOST }}
+        #     username: ${{ secrets.SSH_USERNAME }}
+        #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+        #     script: |
+        #       cd /path/to/your/app
+        #       git pull
+        #       npm install
+        #       npm run build --prefix frontend
+        #       pm2 restart your-app-name

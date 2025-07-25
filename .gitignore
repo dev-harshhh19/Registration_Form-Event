@@ -1,0 +1,31 @@
+# System files
+.DS_Store
+.vscode
+
+# Environment variables
+.env
+
+# Legacy files
+.registration_form.js
+.registration_form.html
+.registration_form.css
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+frontend/build/
+
+# Data
+data/
+
+# Development scripts
+start-dev.bat
+start-dev.sh
+stop-dev.bat
+stop-dev.sh
+
+# Lockfiles
+package-lock.json
+frontend/package-lock.json
