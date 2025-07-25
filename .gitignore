@@ -27,5 +27,3 @@ stop-dev.bat
 stop-dev.sh
 
 # Lockfiles
-package-lock.json
-frontend/package-lock.json
