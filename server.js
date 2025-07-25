@@ -86,20 +86,7 @@ app.use('/api/admin', adminRoutes);
 //   changeOrigin: true,
 // }));
 
-// Serve static files from React build
-app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 
-// Serve the React app for all non-API routes
-app.get('*', (req, res) => {
-    // Skip API routes
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).json({
-            success: false,
-            message: 'API route not found'
-        });
-    }
-    res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
