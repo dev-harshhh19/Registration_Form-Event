@@ -17,26 +17,7 @@ db.on('disconnected', () => {
     console.log('Disconnected from MongoDB');
 });
 
-const mongoose = require('mongoose');
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/seminar_registration';
-
-const db = mongoose.connection;
-
-db.on('connected', () => {
-    console.log('✅ Connected to MongoDB');
-});
-
-db.on('error', (err) => {
-    console.error('❌ MongoDB connection error:', err);
-});
-
-db.on('disconnected', () => {
-    console.log('Disconnected from MongoDB');
-});
-
-// Mongoose Schemas
 const registrationSchema = new mongoose.Schema({
     fullName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
