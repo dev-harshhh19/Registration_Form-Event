@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { dbOperations, AdminUser } = require('../database/database'); // Import AdminUser model
 const twoFactorService = require('../services/twoFactorService');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
