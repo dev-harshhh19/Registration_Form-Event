@@ -215,6 +215,14 @@ router.put('/registrations/:id', authenticateAdmin, async (req, res) => {
 router.delete('/registrations/:id', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Validate MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid registration ID format'
+            });
+        }
         
         const result = await dbOperations.deleteRegistration(id);
         
@@ -225,6 +233,7 @@ router.delete('/registrations/:id', authenticateAdmin, async (req, res) => {
             });
         }
 
+        
         res.json({
             success: true,
             message: 'Registration deleted successfully'
