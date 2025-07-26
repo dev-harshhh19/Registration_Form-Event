@@ -637,7 +637,7 @@ fetchData();
               </thead>
               <tbody>
                 {filteredRegistrations.map((registration) => (
-                  <tr key={registration.id} className="hover:bg-gray-50">
+                  <tr key={registration._id} className="hover:bg-gray-50">
                     <td className="font-medium">{registration.fullName}</td>
                     <td>{registration.email}</td>
                     <td>{registration.branch}</td>
@@ -660,7 +660,7 @@ fetchData();
                           <FaEye />
                         </button>
                         <button
-                          onClick={() => handleDelete(registration.id)}
+                          onClick={() => handleDelete(registration._id)}
                           className="text-red-600 hover:text-red-800"
                         >
                           <FaTrash />
