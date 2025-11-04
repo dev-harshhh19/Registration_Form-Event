@@ -19,10 +19,10 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = useCallback(async () => {
     try {
-      console.log('Checking auth status with token:', token ? 'exists' : 'missing');
+      // Removed sensitive logging
       const response = await axios.get('/api/admin/profile');
       if (response.data.success) {
-        console.log('Auth check successful:', response.data.data);
+        // Removed sensitive logging
         setUser(response.data.data);
         setIsAuthenticated(true);
       } else {
@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
         logout();
       }
     } catch (error) {
+      // Keep error logging for debugging purposes
       console.error('Auth check failed:', error);
       logout();
     } finally {
@@ -66,6 +67,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: response.data.message };
       }
     } catch (error) {
+      // Keep error logging for debugging purposes
       console.error('Login error:', error);
       return { 
         success: false, 
@@ -97,6 +99,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: response.data.message };
       }
     } catch (error) {
+      // Keep error logging for debugging purposes
       console.error('Profile update error:', error);
       return { 
         success: false, 
@@ -118,6 +121,7 @@ export const AuthProvider = ({ children }) => {
         return { success: false, message: response.data.message };
       }
     } catch (error) {
+      // Keep error logging for debugging purposes
       console.error('Password change error:', error);
       return { 
         success: false, 
@@ -141,4 +145,4 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-}; 
+};

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import RegistrationForm from './components/RegistrationForm';
@@ -36,21 +36,23 @@ function AppContent() {
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
-              color: '#fff',
+              background: '#1e293b',
+              color: '#e2e8f0',
+              borderRadius: '0.75rem',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
             },
             success: {
-              duration: 3000,
               iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
+                primary: '#06b6d4',
+                secondary: '#e2e8f0',
               },
             },
             error: {
               duration: 4000,
               iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
+                primary: '#f87171',
+                secondary: '#e2e8f0',
               },
             },
           }}
@@ -89,13 +91,32 @@ function AppContent() {
 
 // App with Auth Provider
 function App() {
+  // Log the reCAPTCHA key for debugging
+  useEffect(() => {
+    console.log('reCAPTCHA site key from env:', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
+  }, []);
+
   return (
     <AuthProvider>
-      <GoogleReCaptchaProvider reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}>
+      <GoogleReCaptchaProvider 
+        reCaptchaKey={process.env.REACT_APP_RECAPTCHA_SITE_KEY}
+        scriptProps={{
+          async: false,
+          defer: false,
+          appendTo: "head",
+          nonce: undefined
+        }}
+        container={{
+          parameters: {
+            badge: 'bottomright',
+            theme: 'dark'
+          }
+        }}
+      >
         <AppContent />
       </GoogleReCaptchaProvider>
     </AuthProvider>
   );
 }
 
-export default App; 
+export default App;

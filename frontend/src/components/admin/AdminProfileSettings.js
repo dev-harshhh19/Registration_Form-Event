@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, 
-  FaSave, FaTimes, FaEdit, FaUserShield, FaKey,
+  FaSave, FaTimes, FaUserShield, FaKey,
   FaCheck, FaExclamationTriangle
 } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
@@ -185,10 +185,10 @@ const AdminProfileSettings = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[95vh] overflow-hidden shadow-2xl border border-white/10">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 text-white">
+        <div className="bg-gradient-to-r from-cyan-600 to-blue-700 px-6 py-4 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-white/10 rounded-lg">
@@ -196,68 +196,53 @@ const AdminProfileSettings = ({ onClose }) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold">Admin Profile Settings</h2>
-                <p className="text-blue-100 text-sm">Manage your account information</p>
+                <p className="text-cyan-100 text-sm">Manage your account information</p>
               </div>
             </div>
             <button
               onClick={onClose}
               className="p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
-              <FaTimes className="text-lg" />
+              <FaTimes className="text-xl" />
             </button>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200">
-          <div className="flex">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex-1 px-6 py-4 text-center font-medium transition-colors relative ${
-                activeTab === 'profile'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <FaEdit className="text-sm" />
-                <span>Profile Information</span>
-              </div>
-            </button>
-            <button
-              onClick={() => setActiveTab('password')}
-              className={`flex-1 px-6 py-4 text-center font-medium transition-colors relative ${
-                activeTab === 'password'
-                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-center justify-center space-x-2">
-                <FaKey className="text-sm" />
-                <span>Change Password</span>
-              </div>
-            </button>
-          </div>
+        {/* Tabs */}
+        <div className="flex border-b border-white/10">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+              activeTab === 'profile'
+                ? 'text-cyan-400 border-b-2 border-cyan-400'
+                : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <FaUser className="inline mr-2" />
+            Profile Information
+          </button>
+          <button
+            onClick={() => setActiveTab('password')}
+            className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+              activeTab === 'password'
+                ? 'text-cyan-400 border-b-2 border-cyan-400'
+                : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <FaLock className="inline mr-2" />
+            Change Password
+          </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[calc(95vh-200px)] overflow-y-auto">
+        <div className="p-6 overflow-y-auto max-h-[calc(95vh-140px)]">
+          {/* Profile Tab */}
           {activeTab === 'profile' && (
             <form onSubmit={handleProfileSubmit} className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-xl border border-blue-200">
-                <div className="flex items-center space-x-3 mb-2">
-                  <FaUser className="text-blue-600" />
-                  <h3 className="font-semibold text-gray-800">Personal Information</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Update your username and email address. These changes will be reflected immediately.
-                </p>
-              </div>
-
-              {/* Username Field */}
+              {/* Username */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  <FaUser className="inline mr-2 text-blue-500" />
+                <label className="block text-sm font-semibold text-slate-300">
+                  <FaUser className="inline mr-2 text-cyan-400" />
                   Username
                 </label>
                 <div className="relative">
@@ -266,35 +251,25 @@ const AdminProfileSettings = ({ onClose }) => {
                     name="username"
                     value={profileData.username}
                     onChange={handleProfileChange}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                      profileErrors.username
-                        ? 'border-red-400 bg-red-50'
-                        : profileData.username !== user?.username
-                        ? 'border-green-400 bg-green-50'
-                        : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 ${
+                      profileErrors.username ? 'border-rose-400 bg-rose-500/10' : 'border-white/20'
+                    } text-white placeholder-slate-400`}
                     placeholder="Enter your username"
                     autoComplete="username"
                   />
-                  {profileData.username !== user?.username && !profileErrors.username && (
-                    <FaCheck className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500" />
-                  )}
-                  {profileErrors.username && (
-                    <FaExclamationTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500" />
-                  )}
                 </div>
                 {profileErrors.username && (
-                  <p className="text-red-500 text-sm flex items-center">
-                    <FaExclamationTriangle className="mr-1" />
+                  <p className="text-rose-400 text-sm flex items-center">
+                    <FaExclamationTriangle className="mr-1 text-xs" />
                     {profileErrors.username}
                   </p>
                 )}
               </div>
 
-              {/* Email Field */}
+              {/* Email */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  <FaEnvelope className="inline mr-2 text-green-500" />
+                <label className="block text-sm font-semibold text-slate-300">
+                  <FaEnvelope className="inline mr-2 text-cyan-400" />
                   Email Address
                 </label>
                 <div className="relative">
@@ -303,68 +278,49 @@ const AdminProfileSettings = ({ onClose }) => {
                     name="email"
                     value={profileData.email}
                     onChange={handleProfileChange}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                      profileErrors.email
-                        ? 'border-red-400 bg-red-50'
-                        : profileData.email !== user?.email
-                        ? 'border-green-400 bg-green-50'
-                        : 'border-gray-300'
-                    }`}
-                    placeholder="Enter your email address"
+                    className={`w-full px-4 py-3 bg-white/5 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 ${
+                      profileErrors.email ? 'border-rose-400 bg-rose-500/10' : 'border-white/20'
+                    } text-white placeholder-slate-400`}
+                    placeholder="Enter your email"
                     autoComplete="email"
                   />
-                  {profileData.email !== user?.email && !profileErrors.email && (
-                    <FaCheck className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500" />
-                  )}
-                  {profileErrors.email && (
-                    <FaExclamationTriangle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500" />
-                  )}
                 </div>
                 {profileErrors.email && (
-                  <p className="text-red-500 text-sm flex items-center">
-                    <FaExclamationTriangle className="mr-1" />
+                  <p className="text-rose-400 text-sm flex items-center">
+                    <FaExclamationTriangle className="mr-1 text-xs" />
                     {profileErrors.email}
                   </p>
                 )}
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                  className="px-5 py-2.5 text-slate-400 hover:text-slate-300 font-medium transition-colors rounded-lg hover:bg-white/5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isProfileLoading || (profileData.username === user?.username && profileData.email === user?.email)}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100"
+                  disabled={isProfileLoading}
+                  className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-blue-700 focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] disabled:hover:scale-100 shadow-lg"
                 >
                   <FaSave className="text-sm" />
-                  <span>{isProfileLoading ? 'Updating...' : 'Update Profile'}</span>
+                  <span>{isProfileLoading ? 'Saving...' : 'Save Changes'}</span>
                 </button>
               </div>
             </form>
           )}
 
+          {/* Password Tab */}
           {activeTab === 'password' && (
             <form onSubmit={handlePasswordSubmit} className="space-y-6">
-              <div className="bg-gradient-to-br from-orange-50 to-red-100 p-4 rounded-xl border border-orange-200">
-                <div className="flex items-center space-x-3 mb-2">
-                  <FaLock className="text-orange-600" />
-                  <h3 className="font-semibold text-gray-800">Security Update</h3>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Choose a strong password that you haven't used elsewhere. Minimum 6 characters required.
-                </p>
-              </div>
-
               {/* Current Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  <FaLock className="inline mr-2 text-red-500" />
+                <label className="block text-sm font-semibold text-slate-300">
+                  <FaLock className="inline mr-2 text-rose-400" />
                   Current Password
                 </label>
                 <div className="relative">
@@ -373,23 +329,23 @@ const AdminProfileSettings = ({ onClose }) => {
                     name="currentPassword"
                     value={passwordData.currentPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                      passwordErrors.currentPassword ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 pr-10 bg-white/5 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 ${
+                      passwordErrors.currentPassword ? 'border-rose-400 bg-rose-500/10' : 'border-white/20'
+                    } text-white placeholder-slate-400`}
                     placeholder="Enter your current password"
                     autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                   >
                     {showCurrentPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
                 {passwordErrors.currentPassword && (
-                  <p className="text-red-500 text-sm flex items-center">
-                    <FaExclamationTriangle className="mr-1" />
+                  <p className="text-rose-400 text-sm flex items-center">
+                    <FaExclamationTriangle className="mr-1 text-xs" />
                     {passwordErrors.currentPassword}
                   </p>
                 )}
@@ -397,8 +353,8 @@ const AdminProfileSettings = ({ onClose }) => {
 
               {/* New Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  <FaKey className="inline mr-2 text-green-500" />
+                <label className="block text-sm font-semibold text-slate-300">
+                  <FaKey className="inline mr-2 text-green-400" />
                   New Password
                 </label>
                 <div className="relative">
@@ -407,23 +363,23 @@ const AdminProfileSettings = ({ onClose }) => {
                     name="newPassword"
                     value={passwordData.newPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                      passwordErrors.newPassword ? 'border-red-400 bg-red-50' : 'border-gray-300'
-                    }`}
+                    className={`w-full px-4 py-3 pr-10 bg-white/5 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 ${
+                      passwordErrors.newPassword ? 'border-rose-400 bg-rose-500/10' : 'border-white/20'
+                    } text-white placeholder-slate-400`}
                     placeholder="Enter your new password"
                     autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                   >
                     {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
                 {passwordErrors.newPassword && (
-                  <p className="text-red-500 text-sm flex items-center">
-                    <FaExclamationTriangle className="mr-1" />
+                  <p className="text-rose-400 text-sm flex items-center">
+                    <FaExclamationTriangle className="mr-1 text-xs" />
                     {passwordErrors.newPassword}
                   </p>
                 )}
@@ -444,19 +400,19 @@ const AdminProfileSettings = ({ onClose }) => {
                             className={`h-1 flex-1 rounded ${
                               i < strength
                                 ? strength === 1
-                                  ? 'bg-red-400'
+                                  ? 'bg-rose-400'
                                   : strength === 2
-                                  ? 'bg-yellow-400'
+                                  ? 'bg-amber-400'
                                   : strength === 3
-                                  ? 'bg-blue-400'
-                                  : 'bg-green-400'
-                                : 'bg-gray-200'
+                                  ? 'bg-cyan-400'
+                                  : 'bg-emerald-400'
+                                : 'bg-slate-600'
                             }`}
                           />
                         );
                       })}
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-slate-400">
                       Include uppercase, numbers, and symbols for a stronger password
                     </p>
                   </div>
@@ -465,8 +421,8 @@ const AdminProfileSettings = ({ onClose }) => {
 
               {/* Confirm Password */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  <FaCheck className="inline mr-2 text-blue-500" />
+                <label className="block text-sm font-semibold text-slate-300">
+                  <FaCheck className="inline mr-2 text-cyan-400" />
                   Confirm New Password
                 </label>
                 <div className="relative">
@@ -475,51 +431,51 @@ const AdminProfileSettings = ({ onClose }) => {
                     name="confirmPassword"
                     value={passwordData.confirmPassword}
                     onChange={handlePasswordChange}
-                    className={`w-full px-4 py-3 pr-10 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    className={`w-full px-4 py-3 pr-10 bg-white/5 border rounded-xl focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300 ${
                       passwordErrors.confirmPassword 
-                        ? 'border-red-400 bg-red-50' 
+                        ? 'border-rose-400 bg-rose-500/10' 
                         : passwordData.confirmPassword && passwordData.newPassword === passwordData.confirmPassword
-                        ? 'border-green-400 bg-green-50'
-                        : 'border-gray-300'
-                    }`}
+                        ? 'border-emerald-400 bg-emerald-500/10'
+                        : 'border-white/20'
+                    } text-white placeholder-slate-400`}
                     placeholder="Confirm your new password"
                     autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                   >
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
                 </div>
                 {passwordErrors.confirmPassword && (
-                  <p className="text-red-500 text-sm flex items-center">
-                    <FaExclamationTriangle className="mr-1" />
+                  <p className="text-rose-400 text-sm flex items-center">
+                    <FaExclamationTriangle className="mr-1 text-xs" />
                     {passwordErrors.confirmPassword}
                   </p>
                 )}
                 {passwordData.confirmPassword && passwordData.newPassword === passwordData.confirmPassword && !passwordErrors.confirmPassword && (
-                  <p className="text-green-500 text-sm flex items-center">
-                    <FaCheck className="mr-1" />
+                  <p className="text-emerald-400 text-sm flex items-center">
+                    <FaCheck className="mr-1 text-xs" />
                     Passwords match
                   </p>
                 )}
               </div>
 
               {/* Submit Button */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-white/10">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
+                  className="px-5 py-2.5 text-slate-400 hover:text-slate-300 font-medium transition-colors rounded-lg hover:bg-white/5"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isPasswordLoading}
-                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-xl hover:from-red-600 hover:to-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100"
+                  className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 text-white font-medium rounded-lg hover:from-rose-600 hover:to-red-700 focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] disabled:hover:scale-100 shadow-lg"
                 >
                   <FaLock className="text-sm" />
                   <span>{isPasswordLoading ? 'Changing...' : 'Change Password'}</span>

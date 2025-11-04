@@ -27,3 +27,7 @@ stop-dev.bat
 stop-dev.sh
 
 # Lockfiles
+PROJECT_STRUCTURE.md
+testsprite_tests/
+.github/workflows/
+GIT_COMMITS.md

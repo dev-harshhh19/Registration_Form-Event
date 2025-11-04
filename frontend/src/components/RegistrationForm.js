@@ -1,12 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaCalendar, FaUsers, FaGithub, FaRocket, FaCheck } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaGraduationCap, FaCalendar, FaUsers, FaGithub, FaRocket, FaCheck, FaLock, FaStar } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
-const RegistrationFormContent = () => {
+// Wrapper component to handle reCAPTCHA loading
+const RegistrationForm = () => {
   const { executeRecaptcha } = useGoogleReCaptcha();
-  // const { executeRecaptcha } = useGoogleReCaptcha();
+  const [recaptchaLoaded, setRecaptchaLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if reCAPTCHA is loaded
+    if (executeRecaptcha) {
+      setRecaptchaLoaded(true);
+      console.log('reCAPTCHA loaded successfully');
+    } else {
+      console.log('reCAPTCHA not loaded yet');
+    }
+    console.log('executeRecaptcha function:', typeof executeRecaptcha);
+  }, [executeRecaptcha]);
+
+  // If reCAPTCHA is not loaded after a certain time, show a warning
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!recaptchaLoaded) {
+        console.warn('reCAPTCHA failed to load. This may affect form submission.');
+        toast('reCAPTCHA is taking longer to load than expected. Please disable ad blockers if you have them enabled.', {
+          duration: 6000,
+          icon: '⚠️'
+        });
+      }
+    }, 5000); // 5 seconds timeout
+
+    return () => clearTimeout(timer);
+  }, [recaptchaLoaded]);
+
+  // Log the reCAPTCHA key being used
+  useEffect(() => {
+    console.log('reCAPTCHA site key from env:', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
+  }, []);
+
+  return <RegistrationFormContent recaptchaLoaded={recaptchaLoaded} executeRecaptcha={executeRecaptcha} />;
+};
+
+const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -24,12 +61,27 @@ const RegistrationFormContent = () => {
   const [showLoading, setShowLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [maintenanceInfo, setMaintenanceInfo] = useState(null);
+  const [seminarInfo, setSeminarInfo] = useState(null);
+
+  // Fetch seminar information
+  useEffect(() => {
+    const fetchSeminarInfo = async () => {
+      try {
+        const response = await axios.get('/api/seminar-info');
+        setSeminarInfo(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch seminar info:', error);
+      }
+    };
+
+    fetchSeminarInfo();
+  }, []);
 
   // Simulate loading screen
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLoading(false);
-    }, 2000);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -109,15 +161,27 @@ const RegistrationFormContent = () => {
     setIsSubmitting(true);
 
     // Execute reCAPTCHA
+    console.log('Checking reCAPTCHA availability:', typeof executeRecaptcha);
     if (!executeRecaptcha) {
         console.error('reCAPTCHA not loaded yet!');
         toast.error('reCAPTCHA not ready. Please try again.');
         setIsSubmitting(false);
         return;
     }
-    const recaptchaToken = await executeRecaptcha('registration_form_submit');
     
     try {
+      console.log('Executing reCAPTCHA...');
+      const recaptchaToken = await executeRecaptcha('registration_form_submit');
+      console.log('reCAPTCHA token received:', recaptchaToken ? 'Yes' : 'No');
+      
+      // Check if we got a valid token
+      if (!recaptchaToken) {
+        console.error('Failed to get reCAPTCHA token');
+        toast.error('reCAPTCHA verification failed. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+      
       const response = await axios.post('/api/registration', { ...formData, recaptchaToken });
       
       if (response.data.success) {
@@ -161,22 +225,22 @@ const RegistrationFormContent = () => {
 
   if (showLoading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center loading-screen">
+      <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-black flex items-center justify-center p-4">
         <div className="text-center">
           <div className="relative mb-8">
-            <div className="w-24 h-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-pulse-slow flex items-center justify-center">
-              <FaRocket className="text-white text-3xl animate-bounce" />
+            <div className="w-20 h-20 mx-auto bg-gradient-to-r from-primary-600 to-primary-800 rounded-full flex items-center justify-center animate-pulse">
+              <FaRocket className="text-white text-2xl animate-bounce" />
             </div>
-            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-pink-400 to-red-400 rounded-full animate-float"></div>
-            <div className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-r from-green-400 to-blue-400 rounded-full animate-float" style={{ animationDelay: '1s' }}></div>
+            <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-primary-400 to-primary-600 rounded-full animate-ping"></div>
+            <div className="absolute -bottom-2 -left-2 w-5 h-5 bg-gradient-to-r from-primary-500 to-primary-700 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
           </div>
           <h2 className="text-2xl font-bold text-white mb-4 animate-fade-in">Prompt Your Future</h2>
           <div className="flex space-x-2 justify-center">
-            <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce"></div>
-            <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-primary-600 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
           </div>
-          <p className="text-gray-300 mt-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>Loading your future...</p>
+          <p className="text-slate-400 mt-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>Preparing your experience...</p>
         </div>
       </div>
     );
@@ -184,23 +248,25 @@ const RegistrationFormContent = () => {
 
   if (maintenanceMode) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <div className="text-center animate-bounce-in">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mb-4">
-              <FaRocket className="text-white text-2xl" />
+      <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-black flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center bg-secondary-800/50 backdrop-blur-lg rounded-2xl p-8 border border-secondary-700 shadow-2xl">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-r from-amber-600 to-amber-800 rounded-full flex items-center justify-center mb-6">
+              <FaLock className="text-white text-2xl" />
             </div>
-            <h3 className="text-xl font-bold text-yellow-400 mb-2">Registration Temporarily Closed</h3>
-            <p className="text-gray-300 mb-6">{maintenanceInfo?.message || 'Registration is temporarily closed due to maintenance activities.'}</p>
+            <h3 className="text-2xl font-bold text-amber-500 mb-3">Registration Temporarily Closed</h3>
+            <p className="text-slate-300 mb-6">{maintenanceInfo?.message || 'Registration is temporarily closed due to maintenance activities.'}</p>
             
-            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-6 mb-6">
-              <h4 className="text-lg font-semibold text-yellow-400 mb-3">🚨 Need Urgent Registration?</h4>
-              <p className="text-gray-300 mb-4">Contact us directly on WhatsApp for immediate assistance:</p>
+            <div className="bg-amber-900/20 border border-amber-700/50 rounded-xl p-5 mb-6">
+              <h4 className="text-lg font-semibold text-amber-500 mb-3 flex items-center justify-center">
+                <FaStar className="mr-2" /> Need Urgent Registration?
+              </h4>
+              <p className="text-slate-300 mb-4">Contact us directly on WhatsApp for immediate assistance:</p>
               <a
                 href={maintenanceInfo?.contactInfo?.whatsappLink || 'https://wa.me/919156633236'}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300 font-semibold"
+                className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-green-700 to-green-800 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 font-semibold shadow-lg"
               >
                 📞 Contact on WhatsApp
               </a>
@@ -208,7 +274,7 @@ const RegistrationFormContent = () => {
             
             <button
               onClick={() => setMaintenanceMode(false)}
-              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+              className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-500 hover:to-primary-600 transition-all duration-300 shadow-lg"
             >
               Try Again
             </button>
@@ -220,15 +286,16 @@ const RegistrationFormContent = () => {
 
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          <div className="text-center animate-bounce-in">
-            <div className="w-16 h-16 mx-auto bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-4">
-              <FaCheck className="text-white text-2xl" />
+      <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-black flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center bg-secondary-800/50 backdrop-blur-lg rounded-2xl p-8 border border-secondary-700 shadow-2xl">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-r from-emerald-700 to-emerald-800 rounded-full flex items-center justify-center mb-6 animate-pulse">
+              <FaCheck className="text-white text-3xl" />
             </div>
-            <h3 className="text-xl font-bold text-green-400 mb-2">Registration Successful!</h3>
-            <p className="text-gray-300">Thank you for registering! Please check your email for seminar details and updates.</p>
-            <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-gray-400">
+            <h3 className="text-2xl font-bold text-emerald-500 mb-3">Registration Successful!</h3>
+            <p className="text-slate-300 mb-2">Thank you for registering!</p>
+            <p className="text-slate-400 text-sm mb-6">Please check your email for seminar details and updates.</p>
+            <div className="flex items-center justify-center space-x-2 text-sm text-slate-400 mb-6">
               <FaEnvelope />
               <span>Confirmation email sent</span>
             </div>
@@ -245,8 +312,9 @@ const RegistrationFormContent = () => {
                   githubUsername: '',
                   consent: false
                 });
+                setErrors({});
               }}
-              className="mt-6 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+              className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-500 hover:to-primary-600 transition-all duration-300 shadow-lg"
             >
               Register Another Person
             </button>
@@ -257,29 +325,43 @@ const RegistrationFormContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 animate-gradient flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-secondary-900 via-secondary-800 to-black relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%]">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-900/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute top-3/4 right-1/4 w-80 h-80 bg-secondary-900/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-primary-800/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+        </div>
+      </div>
+      
+      <div className="w-full max-w-2xl relative z-10">
         {/* Header */}
-        <div className="text-center mb-8 animate-slide-up">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 animate-bounce-in">
-            <FaRocket className="text-white text-2xl" />
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-primary-700 to-primary-900 rounded-2xl mb-6 shadow-lg transform rotate-3 animate-float border border-primary-600">
+            <FaRocket className="text-white text-3xl" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary-300 via-primary-200 to-primary-400 bg-clip-text text-transparent mb-3">
             Prompt Your Future
           </h1>
-          <p className="text-xl text-gray-300 mb-2">Learn Prompt Engineering & Build Your First Portfolio</p>
-          <div className="flex items-center justify-center space-x-4 text-sm text-gray-400">
-            <span className="flex items-center"><FaCalendar className="mr-2" />Coming Soon</span>
-            <span className="flex items-center"><FaUsers className="mr-2" />Limited Seats</span>
+          <p className="text-xl text-slate-300 mb-3">Learn Prompt Engineering & Build Your First Portfolio</p>
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-slate-400">
+            <span className="flex items-center bg-secondary-800/50 px-3 py-1.5 rounded-full border border-secondary-700">
+              <FaCalendar className="mr-2 text-primary-400" />
+              {seminarInfo?.date ? `Coming on ${new Date(seminarInfo.date).toLocaleDateString()}` : 'Coming Soon'}
+            </span>
+            <span className="flex items-center bg-secondary-800/50 px-3 py-1.5 rounded-full border border-secondary-700">
+              <FaUsers className="mr-2 text-primary-400" />Limited Seats
+            </span>
           </div>
         </div>
 
         {/* Registration Form */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20 animate-slide-up" style={{ animationDelay: '0.2s' }}>
+        <div className="bg-secondary-800/50 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-2xl border border-secondary-700 animate-fade-in">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Full Name */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-200 mb-2 group-focus-within:text-blue-400 transition-colors">
+              <label className="block text-sm font-semibold text-slate-200 mb-2 group-focus-within:text-primary-300 transition-colors">
                 <FaUser className="inline mr-2" />Full Name
               </label>
               <div className="relative">
@@ -288,19 +370,19 @@ const RegistrationFormContent = () => {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 ${errors.fullName ? 'border-red-400' : ''}`}
+                  className={`w-full px-4 py-3.5 bg-secondary-900/50 border ${errors.fullName ? 'border-red-700/50' : 'border-secondary-700'} rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 backdrop-blur-sm`}
                   placeholder="Enter your full name"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <FaUser className="text-gray-400" />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <FaUser className="text-slate-500" />
                 </div>
               </div>
-              {errors.fullName && <div className="text-red-400 text-sm mt-1">{errors.fullName}</div>}
+              {errors.fullName && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.fullName}</div>}
             </div>
 
             {/* Email */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-200 mb-2 group-focus-within:text-blue-400 transition-colors">
+              <label className="block text-sm font-semibold text-slate-200 mb-2 group-focus-within:text-primary-300 transition-colors">
                 <FaEnvelope className="inline mr-2" />College Email ID
               </label>
               <div className="relative">
@@ -309,19 +391,19 @@ const RegistrationFormContent = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 ${errors.email ? 'border-red-400' : ''}`}
+                  className={`w-full px-4 py-3.5 bg-secondary-900/50 border ${errors.email ? 'border-red-700/50' : 'border-secondary-700'} rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 backdrop-blur-sm`}
                   placeholder="your.email@college.edu"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <FaEnvelope className="text-gray-400" />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <FaEnvelope className="text-slate-500" />
                 </div>
               </div>
-              {errors.email && <div className="text-red-400 text-sm mt-1">{errors.email}</div>}
+              {errors.email && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.email}</div>}
             </div>
 
             {/* Phone */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-200 mb-2 group-focus-within:text-blue-400 transition-colors">
+              <label className="block text-sm font-semibold text-slate-200 mb-2 group-focus-within:text-primary-300 transition-colors">
                 <FaPhone className="inline mr-2" />Phone Number
               </label>
               <div className="relative">
@@ -331,21 +413,21 @@ const RegistrationFormContent = () => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   maxLength="10"
-                  className={`w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 ${errors.phone ? 'border-red-400' : ''}`}
+                  className={`w-full px-4 py-3.5 bg-secondary-900/50 border ${errors.phone ? 'border-red-700/50' : 'border-secondary-700'} rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 backdrop-blur-sm`}
                   placeholder="1234567890"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <FaPhone className="text-gray-400" />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <FaPhone className="text-slate-500" />
                 </div>
               </div>
-              {errors.phone && <div className="text-red-400 text-sm mt-1">{errors.phone}</div>}
+              {errors.phone && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.phone}</div>}
             </div>
 
             {/* Branch and Year Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Branch */}
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-200 mb-2 group-focus-within:text-blue-400 transition-colors">
+                <label className="block text-sm font-semibold text-slate-200 mb-2 group-focus-within:text-primary-300 transition-colors">
                   <FaGraduationCap className="inline mr-2" />Branch
                 </label>
                 <div className="relative">
@@ -353,25 +435,25 @@ const RegistrationFormContent = () => {
                     name="branch"
                     value={formData.branch}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 appearance-none ${errors.branch ? 'border-red-400' : ''}`}
+                    className={`w-full px-4 py-3.5 bg-secondary-900/50 border ${errors.branch ? 'border-red-700/50' : 'border-secondary-700'} rounded-xl text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 appearance-none backdrop-blur-sm`}
                   >
-                    <option value="">Select Branch</option>
-                    <option value="IT">IT</option>
-                    <option value="Computer Science">Computer Science</option>
-                    <option value="Cybersecurity">Cybersecurity</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Other">Other</option>
+                    <option value="" className="bg-secondary-900">Select Branch</option>
+                    <option value="IT" className="bg-secondary-900">IT</option>
+                    <option value="Computer Science" className="bg-secondary-900">Computer Science</option>
+                    <option value="Cybersecurity" className="bg-secondary-900">Cybersecurity</option>
+                    <option value="Data Science" className="bg-secondary-900">Data Science</option>
+                    <option value="Other" className="bg-secondary-900">Other</option>
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <FaGraduationCap className="text-gray-400" />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                    <FaGraduationCap className="text-slate-500" />
                   </div>
                 </div>
-                {errors.branch && <div className="text-red-400 text-sm mt-1">{errors.branch}</div>}
+                {errors.branch && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.branch}</div>}
               </div>
 
               {/* Year */}
               <div className="group">
-                <label className="block text-sm font-semibold text-gray-200 mb-2 group-focus-within:text-blue-400 transition-colors">
+                <label className="block text-sm font-semibold text-slate-200 mb-2 group-focus-within:text-primary-300 transition-colors">
                   <FaCalendar className="inline mr-2" />Year of Study
                 </label>
                 <div className="relative">
@@ -379,29 +461,29 @@ const RegistrationFormContent = () => {
                     name="yearOfStudy"
                     value={formData.yearOfStudy}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300 appearance-none ${errors.yearOfStudy ? 'border-red-400' : ''}`}
+                    className={`w-full px-4 py-3.5 bg-secondary-900/50 border ${errors.yearOfStudy ? 'border-red-700/50' : 'border-secondary-700'} rounded-xl text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 appearance-none backdrop-blur-sm`}
                   >
-                    <option value="">Select Year</option>
-                    <option value="1st Year">1st Year</option>
-                    <option value="2nd Year">2nd Year</option>
-                    <option value="3rd Year">3rd Year</option>
-                    <option value="4th Year">4th Year</option>
+                    <option value="" className="bg-secondary-900">Select Year</option>
+                    <option value="1st Year" className="bg-secondary-900">1st Year</option>
+                    <option value="2nd Year" className="bg-secondary-900">2nd Year</option>
+                    <option value="3rd Year" className="bg-secondary-900">3rd Year</option>
+                    <option value="4th Year" className="bg-secondary-900">4th Year</option>
                   </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <FaCalendar className="text-gray-400" />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                    <FaCalendar className="text-slate-500" />
                   </div>
                 </div>
-                {errors.yearOfStudy && <div className="text-red-400 text-sm mt-1">{errors.yearOfStudy}</div>}
+                {errors.yearOfStudy && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.yearOfStudy}</div>}
               </div>
             </div>
 
             {/* Workshop Attendance */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-200 mb-3 group-focus-within:text-blue-400 transition-colors">
+              <label className="block text-sm font-semibold text-slate-200 mb-3 group-focus-within:text-primary-300 transition-colors">
                 <FaUsers className="inline mr-2" />Will you attend the Workshop?
               </label>
-              <div className="flex space-x-6">
-                <label className="flex items-center cursor-pointer group/radio">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="flex items-center cursor-pointer group/radio p-4 bg-secondary-900/50 rounded-xl border border-secondary-700 hover:border-primary-500/50 transition-all duration-300">
                   <input
                     type="radio"
                     name="workshopAttendance"
@@ -410,12 +492,12 @@ const RegistrationFormContent = () => {
                     onChange={handleInputChange}
                     className="sr-only"
                   />
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded-full mr-3 group-hover/radio:border-blue-400 transition-colors relative">
-                    <div className={`absolute inset-1 bg-blue-400 rounded-full scale-0 transition-transform duration-200 ${formData.workshopAttendance === 'Yes' ? 'scale-100' : ''}`}></div>
+                  <div className="w-5 h-5 border-2 border-slate-500 rounded-full mr-3 group-hover/radio:border-primary-400 transition-colors relative flex-shrink-0">
+                    <div className={`absolute inset-1 bg-primary-500 rounded-full scale-0 transition-transform duration-200 ${formData.workshopAttendance === 'Yes' ? 'scale-100' : ''}`}></div>
                   </div>
-                  <span className="text-gray-200 group-hover/radio:text-blue-400 transition-colors">Yes, I'm excited!</span>
+                  <span className="text-slate-200 group-hover/radio:text-primary-300 transition-colors">Yes, I'm excited!</span>
                 </label>
-                <label className="flex items-center cursor-pointer group/radio">
+                <label className="flex items-center cursor-pointer group/radio p-4 bg-secondary-900/50 rounded-xl border border-secondary-700 hover:border-primary-500/50 transition-all duration-300">
                   <input
                     type="radio"
                     name="workshopAttendance"
@@ -424,19 +506,19 @@ const RegistrationFormContent = () => {
                     onChange={handleInputChange}
                     className="sr-only"
                   />
-                  <div className="w-5 h-5 border-2 border-gray-400 rounded-full mr-3 group-hover/radio:border-blue-400 transition-colors relative">
-                    <div className={`absolute inset-1 bg-blue-400 rounded-full scale-0 transition-transform duration-200 ${formData.workshopAttendance === 'No' ? 'scale-100' : ''}`}></div>
+                  <div className="w-5 h-5 border-2 border-slate-500 rounded-full mr-3 group-hover/radio:border-primary-400 transition-colors relative flex-shrink-0">
+                    <div className={`absolute inset-1 bg-primary-500 rounded-full scale-0 transition-transform duration-200 ${formData.workshopAttendance === 'No' ? 'scale-100' : ''}`}></div>
                   </div>
-                  <span className="text-gray-200 group-hover/radio:text-blue-400 transition-colors">Not sure yet</span>
+                  <span className="text-slate-200 group-hover/radio:text-primary-300 transition-colors">Not sure yet</span>
                 </label>
               </div>
-              {errors.workshopAttendance && <div className="text-red-400 text-sm mt-1">{errors.workshopAttendance}</div>}
+              {errors.workshopAttendance && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.workshopAttendance}</div>}
             </div>
 
             {/* GitHub Username */}
             <div className="group">
-              <label className="block text-sm font-semibold text-gray-200 mb-2 group-focus-within:text-blue-400 transition-colors">
-                <FaGithub className="inline mr-2" />GitHub Username <span className="text-gray-400 text-xs">(optional)</span>
+              <label className="block text-sm font-semibold text-slate-200 mb-2 group-focus-within:text-primary-300 transition-colors">
+                <FaGithub className="inline mr-2" />GitHub Username <span className="text-slate-500 text-xs"></span>
               </label>
               <div className="relative">
                 <input
@@ -444,18 +526,18 @@ const RegistrationFormContent = () => {
                   name="githubUsername"
                   value={formData.githubUsername}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 bg-white/10 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
+                  className="w-full px-4 py-3.5 bg-secondary-900/50 border border-secondary-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 backdrop-blur-sm"
                   placeholder="your-github-username"
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <FaGithub className="text-gray-400" />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4">
+                  <FaGithub className="text-slate-500" />
                 </div>
               </div>
             </div>
 
             {/* Consent */}
             <div className="group">
-              <label className="flex items-start cursor-pointer group/checkbox">
+              <label className="flex items-start cursor-pointer group/checkbox p-4 bg-secondary-900/50 rounded-xl border border-secondary-700 hover:border-primary-500/50 transition-all duration-300">
                 <input
                   type="checkbox"
                   name="consent"
@@ -463,29 +545,30 @@ const RegistrationFormContent = () => {
                   onChange={handleInputChange}
                   className="sr-only"
                 />
-                <div className={`w-5 h-5 border-2 border-gray-400 rounded mr-3 mt-0.5 group-hover/checkbox:border-blue-400 transition-colors relative flex-shrink-0 ${formData.consent ? 'bg-blue-400 border-blue-400' : ''}`}>
+                <div className={`w-5 h-5 border-2 border-slate-500 rounded mr-3 mt-0.5 group-hover/checkbox:border-primary-400 transition-colors relative flex-shrink-0 ${formData.consent ? 'bg-primary-500 border-primary-500' : ''}`}>
                   {formData.consent && <FaCheck className="text-white text-xs absolute inset-0 flex items-center justify-center" />}
                 </div>
-                <span className="text-gray-200 group-hover/checkbox:text-blue-400 transition-colors text-sm">
+                <span className="text-slate-200 group-hover/checkbox:text-primary-300 transition-colors text-sm">
                   I agree to receive emails regarding the seminar and workshop. I understand that this will help me stay updated with important information.
                 </span>
               </label>
-              {errors.consent && <div className="text-red-400 text-sm mt-1">{errors.consent}</div>}
+              {errors.consent && <div className="text-red-500 text-sm mt-1.5 flex items-center"><FaStar className="mr-1 text-xs" />{errors.consent}</div>}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={!isFormValid() || isSubmitting || !executeRecaptcha}
-              className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-4 focus:ring-blue-400/30 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100"
+              className="w-full py-4 px-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl shadow-lg hover:from-primary-500 hover:to-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-500/30 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:scale-100 shadow-primary-500/20 border border-primary-600"
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center">
-                  <div className="spinner mr-2"></div>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Processing...
                 </span>
               ) : !executeRecaptcha ? (
                 <span className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Loading reCAPTCHA...
                 </span>
               ) : (
@@ -499,7 +582,7 @@ const RegistrationFormContent = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-gray-400 animate-slide-up" style={{ animationDelay: '0.4s' }}>
+        <div className="text-center mt-8 text-slate-500 animate-fade-in">
           <p className="text-sm">Powered by AI & Innovation</p>
         </div>
       </div>
@@ -507,4 +590,4 @@ const RegistrationFormContent = () => {
   );
 };
 
-export default RegistrationFormContent; 
+export default RegistrationForm;

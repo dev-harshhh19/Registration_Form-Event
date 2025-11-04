@@ -25,6 +25,19 @@ const formatSeminarDate = (settings) => {
 };
 
 // Get seminar settings with fallback
+// HTML escape function to prevent XSS in email templates
+const escapeHtml = (text) => {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, (m) => map[m]);
+};
+
 const getSeminarSettings = async () => {
     try {
         const settings = await dbOperations.getSeminarSettings();
@@ -69,6 +82,10 @@ const createTransporter = () => {
     }
 
     // For production, use real SMTP
+    const tlsConfig = process.env.NODE_ENV === 'production' 
+        ? { rejectUnauthorized: true } // Strict TLS in production
+        : { rejectUnauthorized: false }; // Allow self-signed certs in development only
+    
     return nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: process.env.SMTP_PORT || 587,
@@ -77,9 +94,7 @@ const createTransporter = () => {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
         },
-        tls: {
-            rejectUnauthorized: false
-        }
+        tls: tlsConfig
     });
 };
 
@@ -102,7 +117,7 @@ const emailTemplates = {
                         max-width: 600px;
                         margin: 0 auto;
                         padding: 20px;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        background: linear-gradient(135deg, #0D9488 0%, #334155 100%);
                     }
                     .container {
                         background: white;
@@ -117,7 +132,7 @@ const emailTemplates = {
                     .logo {
                         width: 80px;
                         height: 80px;
-                        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+                        background: linear-gradient(45deg, #0D9488, #334155);
                         border-radius: 50%;
                         display: inline-flex;
                         align-items: center;
@@ -132,7 +147,7 @@ const emailTemplates = {
                         color: #1f2937;
                         margin: 0;
                         font-size: 2rem;
-                        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+                        background: linear-gradient(45deg, #0D9488, #334155);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
@@ -181,7 +196,7 @@ const emailTemplates = {
                         color: #92400e;
                     }
                     .next-steps {
-                        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+                        background: linear-gradient(45deg, #0D9488, #334155);
                         color: white;
                         padding: 25px;
                         border-radius: 10px;
@@ -212,16 +227,16 @@ const emailTemplates = {
                     .social-links a {
                         display: inline-block;
                         margin: 0 10px;
-                        color: #3b82f6;
+                        color: #0D9488;
                         text-decoration: none;
                         padding: 8px 16px;
                         border-radius: 8px;
-                        background: #f0f9ff;
-                        border: 1px solid #3b82f6;
+                        background: #f0fdfa;
+                        border: 1px solid #0D9488;
                         transition: all 0.3s ease;
                     }
                     .social-links a:hover {
-                        background: #3b82f6;
+                        background: #0D9488;
                         color: white;
                         text-decoration: none;
                     }
@@ -289,9 +304,9 @@ const emailTemplates = {
                         </div>
                         <h1>Welcome to Prompt Your Future!</h1>
                         <p class="welcome-text">
-                            Hi ${data.fullName}, thank you for registering for our seminar on Prompt Engineering!
+                            Hi ${escapeHtml(data.fullName)}, thank you for registering for our seminar on Prompt Engineering!
                         </p>
-                        <p class="seminar-date" style="background: #f0f9ff; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center; border-left: 4px solid #3b82f6;">
+                        <p class="seminar-date" style="background: #f0fdfa; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center; border-left: 4px solid #0D9488;">
                             <strong>📅 Seminar Date:</strong> ${formatSeminarDate(data.settings)}<br>
                             <strong>📍 Location:</strong> ${data.settings?.location || 'TBD'}
                         </p>
@@ -453,7 +468,7 @@ The Prompt Your Future Team
                         font-weight: 600;
                     }
                     .checklist {
-                        background: #f0f9ff;
+                        background: #f0fdfa;
                         border-radius: 10px;
                         padding: 20px;
                         margin: 20px 0;

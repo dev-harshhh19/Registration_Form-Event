@@ -1,7 +1,7 @@
 {
   "name": "seminar-registration-backend",
   "version": "1.0.0",
-  "description": "Backend for Prompt Your Future Seminar Registration",
+  "description": "Registration System for Prompt Your Future Seminar",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,11 +9,8 @@
     "test": "jest",
     "dev:full": "concurrently \"npm run dev\" \"cd frontend && npm start\"",
     "install:all": "npm install && cd frontend && npm install",
-    "build": "cd frontend && npm run build",
-    "2fa:help": "node scripts/2fa-cli.js help",
-    "2fa:generate": "node scripts/2fa-cli.js generate",
-    "2fa:verify": "node scripts/2fa-cli.js verify",
-    "2fa:token": "node scripts/2fa-cli.js token"
+    "build": "cd frontend && npm run build"
+
   },
   "keywords": [
     "seminar",
@@ -25,25 +22,24 @@
   "watermark": "Developed by HARSHAD NIKAM",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.11.0",
-    "bcryptjs": "^2.4.3",
-    "compression": "^1.7.4",
+    "axios": "^1.13.1",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^17.2.3",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "express-validator": "^7.0.1",
-    "helmet": "^7.1.0",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^7.3.0",
+    "helmet": "^8.1.0",
     "http-proxy-middleware": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.5",
-    "morgan": "^1.10.0",
-    "multer": "^1.4.5-lts.1",
-    "nodemailer": "^6.9.7",
+    "mongoose": "^8.19.2",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.10",
     "qrcode": "^1.5.4",
-    "speakeasy": "^2.0.0",
-    
-    "uuid": "^11.1.0"
+
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "concurrently": "^8.0.1",

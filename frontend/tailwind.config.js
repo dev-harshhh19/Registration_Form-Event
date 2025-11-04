@@ -12,6 +12,7 @@ module.exports = {
         'pulse-slow': 'pulse 3s infinite',
         'float': 'float 3s ease-in-out infinite',
         'gradient': 'gradient 8s ease infinite',
+        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -35,23 +36,63 @@ module.exports = {
         gradient: {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%': { backgroundPosition: '100% 50%' }
+        },
+        spin: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' }
         }
       },
       colors: {
+        // Professional dark color palette - transitioning from blue to black
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
+          DEFAULT: '#1e40af', // Professional dark blue
+          50: '#dbeafe',
+          100: '#bfdbfe',
+          200: '#93c5fd',
+          300: '#60a5fa',
+          400: '#3b82f6',
+          500: '#2563eb',
+          600: '#1e40af',
+          700: '#1e3a8a',
+          800: '#1e293b',
+          900: '#1e293b',
+        },
+        secondary: {
+          DEFAULT: '#0f172a', // Dark slate approaching black
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        // Monochromatic accent colors
+        accent: {
+          DEFAULT: '#334155', // Slate gray
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+        },
+        // Professional dark background
+        background: '#0f172a',
+        // Text colors for dark theme
+        text: {
+          primary: '#f1f5f9',
+          secondary: '#e2e8f0',
+          muted: '#94a3b8',
         }
       }
     },
   },
   plugins: [],
-} 
+}

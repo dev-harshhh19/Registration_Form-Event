@@ -1,8 +1,3 @@
-
-
-
-
-
 const mongoose = require('mongoose');
 
 // MongoDB Connection
@@ -48,24 +43,18 @@ const adminUserSchema = new mongoose.Schema({
     role: { type: String, default: 'admin' },
     created_at: { type: Date, default: Date.now },
     last_login: { type: Date },
-    is_active: { type: Boolean, default: true },
-    two_factor_enabled: { type: Boolean, default: false },
-    two_factor_secret: { type: String },
-    backup_codes: { type: String }, // Stored as JSON string
-    two_factor_last_used: { type: Date },
-    temp_secret: { type: String },
-    temp_secret_expires: { type: Date }
+    is_active: { type: Boolean, default: true }
 });
 
 const seminarSettingsSchema = new mongoose.Schema({
-    title: { type: String, required: true, default: 'Prompt Your Future: Learn Prompt Engineering & Build Your First Portfolio' },
+    title: { type: String, required: true },
     date: { type: String, required: true },
     time: { type: String, required: true },
     location: { type: String, required: true },
     duration: { type: String, required: true },
     description: { type: String },
-    instructor_name: { type: String, default: 'Harshad Nikam' },
-    instructor_email: { type: String, default: 'nikamharshadshivaji@gmail.com' },
+    instructor_name: { type: String },
+    instructor_email: { type: String },
     max_participants: { type: Number, default: 100 },
     registration_deadline: { type: String },
     whatsapp_number: { type: String },
@@ -169,16 +158,16 @@ async function insertDefaultSeminarSettings() {
         if (!existingSettings) {
             await SeminarSettings.create({
                 title: 'Prompt Your Future: Learn Prompt Engineering & Build Your First Portfolio',
-                date: process.env.SEMINAR_DATE || '2025-07-25',
+                date: process.env.SEMINAR_DATE || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default to 30 days from now
                 time: process.env.SEMINAR_TIME || '10:00 AM',
-                location: process.env.SEMINAR_LOCATION || 'Seminar Hall, First Floor, IT building.',
+                location: process.env.SEMINAR_LOCATION || 'TBD',
                 duration: process.env.SEMINAR_DURATION || '3 hours',
                 description: 'Join us for an exciting seminar on Prompt Engineering and build your first AI portfolio. Learn the latest techniques and best practices in AI development.',
-                instructor_name: 'Harshad Nikam',
-                instructor_email: 'nikamharshadshivaji@gmail.com',
-                max_participants: 100,
-                whatsapp_number: process.env.WHATSAPP_NUMBER || '+919156633236',
-                whatsapp_group_link: process.env.WHATSAPP_GROUP_LINK || 'https://chat.whatsapp.com/+919156633236'
+                instructor_name: process.env.INSTRUCTOR_NAME || '',
+                instructor_email: process.env.INSTRUCTOR_EMAIL || '',
+                max_participants: process.env.MAX_PARTICIPANTS ? parseInt(process.env.MAX_PARTICIPANTS) : 100,
+                whatsapp_number: process.env.WHATSAPP_NUMBER || '',
+                whatsapp_group_link: process.env.WHATSAPP_GROUP_LINK || ''
             });
             console.log('✅ Default seminar settings created');
         } else {
@@ -257,15 +246,22 @@ const dbOperations = {
     getAllRegistrations: async (search = '', limit = 10, offset = 0, sortBy = 'registrationDate', sortOrder = 'desc') => {
         const query = { status: 'active' };
         if (search) {
+            // Escape special regex characters to prevent NoSQL injection
+            const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             query.$or = [
-                { fullName: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
-                { phone: { $regex: search, $options: 'i' } },
-                { branch: { $regex: search, $options: 'i' } }
+                { fullName: { $regex: escapedSearch, $options: 'i' } },
+                { email: { $regex: escapedSearch, $options: 'i' } },
+                { phone: { $regex: escapedSearch, $options: 'i' } },
+                { branch: { $regex: escapedSearch, $options: 'i' } }
             ];
         }
+        // Validate sortBy to prevent injection
+        const allowedSortFields = ['registrationDate', 'fullName', 'email', 'branch', 'yearOfStudy'];
+        const safeSortBy = allowedSortFields.includes(sortBy) ? sortBy : 'registrationDate';
+        const safeSortOrder = sortOrder === 'asc' ? 1 : -1;
+        
         return await Registration.find(query)
-            .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+            .sort({ [safeSortBy]: safeSortOrder })
             .skip(offset)
             .limit(limit);
     },
@@ -274,11 +270,13 @@ const dbOperations = {
     getRegistrationsCount: async (search = '') => {
         const query = { status: 'active' };
         if (search) {
+            // Escape special regex characters to prevent NoSQL injection
+            const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             query.$or = [
-                { fullName: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
-                { phone: { $regex: search, $options: 'i' } },
-                { branch: { $regex: search, $options: 'i' } }
+                { fullName: { $regex: escapedSearch, $options: 'i' } },
+                { email: { $regex: escapedSearch, $options: 'i' } },
+                { phone: { $regex: escapedSearch, $options: 'i' } },
+                { branch: { $regex: escapedSearch, $options: 'i' } }
             ];
         }
         return await Registration.countDocuments(query);
@@ -422,78 +420,34 @@ const dbOperations = {
     getAdminById: async (id) => {
         return await AdminUser.findOne({ _id: id, is_active: true });
     },
-
+    
     // Get admin by username
     getAdminByUsername: async (username) => {
-        return await AdminUser.findOne({ username, is_active: true });
+        return await AdminUser.findOne({ username: username, is_active: true });
     },
-
-    // Enable 2FA for user
-    enable2FA: async (userId, secret, backupCodes) => {
+    
+    // Update admin profile
+    updateAdminProfile: async (id, updateData) => {
         const result = await AdminUser.updateOne(
-            { _id: userId },
-            {
-                $set: {
-                    two_factor_enabled: true,
-                    two_factor_secret: secret,
-                    backup_codes: JSON.stringify(backupCodes),
-                    temp_secret: null,
-                    temp_secret_expires: null
-                }
-            }
+            { _id: id, is_active: true }, 
+            { $set: updateData }
         );
         return { changes: result.modifiedCount };
     },
-
-    // Disable 2FA for user
-    disable2FA: async (userId) => {
+    
+    // Update admin password
+    updateAdminPassword: async (id, newPassword) => {
         const result = await AdminUser.updateOne(
-            { _id: userId },
-            {
-                $set: {
-                    two_factor_enabled: false,
-                    two_factor_secret: null,
-                    backup_codes: null,
-                    two_factor_last_used: null,
-                    temp_secret: null,
-                    temp_secret_expires: null
-                }
-            }
+            { _id: id, is_active: true }, 
+            { $set: { password: newPassword } }
         );
         return { changes: result.modifiedCount };
     },
-
-    // Store temporary secret for 2FA setup
-    storeTempSecret: async (userId, tempSecret) => {
-        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    
+    // Update admin 2FA usage
+    updateAdmin2FA: async (id) => {
         const result = await AdminUser.updateOne(
-            { _id: userId },
-            { $set: { temp_secret: tempSecret, temp_secret_expires: expiresAt } }
-        );
-        return { changes: result.modifiedCount };
-    },
-
-    // Get temporary secret
-    getTempSecret: async (userId) => {
-        return await AdminUser.findOne(
-            { _id: userId, temp_secret_expires: { $gt: Date.now() } },
-            { temp_secret: 1, temp_secret_expires: 1 }
-        );
-    },
-
-    // Update backup codes
-    updateBackupCodes: async (userId, backupCodes) => {
-        const result = await AdminUser.updateOne(
-            { _id: userId },
-            { $set: { backup_codes: JSON.stringify(backupCodes) } }
-        );
-        return { changes: result.modifiedCount };
-    },
-
-    // Record 2FA usage
-    record2FAUsage: async (userId, method) => {
-        const result = await AdminUser.updateOne(
-            { _id: userId },
+            { _id: id }, 
             { $set: { two_factor_last_used: Date.now(), last_login: Date.now() } }
         );
         return { changes: result.modifiedCount };
