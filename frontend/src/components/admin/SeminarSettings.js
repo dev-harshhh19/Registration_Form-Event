@@ -162,10 +162,6 @@ const SeminarSettings = ({ onClose, onSave }) => {
     }
   };
 
-  const formatDateForInput = (dateStr) => {
-    if (!dateStr) return '';
-    return dateStr; // Already in YYYY-MM-DD format
-  };
 
   if (loading) {
     return (

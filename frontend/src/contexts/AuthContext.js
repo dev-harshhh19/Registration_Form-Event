@@ -16,6 +16,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('adminToken'));
+  const logout = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('adminToken');
+    delete axios.defaults.headers.common['Authorization'];
+  }, []);
 
   const checkAuthStatus = useCallback(async () => {
     try {
@@ -36,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [logout]);
 
   // Set up axios defaults
   useEffect(() => {
@@ -76,13 +83,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('adminToken');
-    delete axios.defaults.headers.common['Authorization'];
-  };
+  // logout is defined above (stable via useCallback)
 
   const updateProfile = async (username, email) => {
     try {

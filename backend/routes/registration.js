@@ -15,13 +15,14 @@ const sanitizeString = (value) => {
 
 // Validation rules
 const registrationValidation = [
+    // Allow unicode letters, spaces and common name punctuation (.,' -)
     body('fullName')
         .trim()
         .isLength({ min: 3, max: 100 })
         .withMessage('Full name must be between 3 and 100 characters')
-        .matches(/^[a-zA-Z\s]+$/)
-        .withMessage('Full name should only contain letters and spaces'),
-    
+        .matches(/^[\p{L}\s.'-]+$/u)
+        .withMessage('Full name contains invalid characters'),
+
     body('email')
         .isEmail()
         .normalizeEmail()
@@ -33,23 +34,25 @@ const registrationValidation = [
             }
             return true;
         }),
-    
+
+    // Strip non-digits first, then validate length (10-15 digits to allow country codes)
     body('phone')
-        .matches(/^\d{10}$/)
-        .withMessage('Phone number must be exactly 10 digits'),
-    
+        .customSanitizer(value => (typeof value === 'string' ? value.replace(/[^0-9]/g, '') : value))
+        .isLength({ min: 10, max: 15 })
+        .withMessage('Phone number must contain between 10 and 15 digits'),
+
     body('branch')
         .isIn(['IT', 'Computer Science', 'Cybersecurity', 'Data Science', 'Other'])
         .withMessage('Please select a valid branch'),
-    
+
     body('yearOfStudy')
         .isIn(['1st Year', '2nd Year', '3rd Year', '4th Year'])
         .withMessage('Please select a valid year of study'),
-    
+
     body('workshopAttendance')
         .isIn(['Yes', 'No'])
         .withMessage('Please select workshop attendance'),
-    
+
     body('githubUsername')
         .optional()
         .trim()
@@ -57,16 +60,19 @@ const registrationValidation = [
         .withMessage('GitHub username must be between 1 and 39 characters')
         .matches(/^[a-zA-Z0-9-]+$/)
         .withMessage('GitHub username can only contain letters, numbers, and hyphens'),
-    
+
+    // Accept boolean or common string equivalents ('true', 'false', 'on')
     body('consent')
-        .isBoolean()
-        .withMessage('Consent must be a boolean value')
-        .custom((value) => {
-            if (!value) {
-                throw new Error('You must agree to receive emails');
+        .custom(value => {
+            if (typeof value === 'boolean') return value === true;
+            if (typeof value === 'string') {
+                const v = value.toLowerCase().trim();
+                return v === 'true' || v === '1' || v === 'on';
             }
-            return true;
-        }),
+            return false;
+        })
+        .withMessage('You must agree to receive emails'),
+
     body('recaptchaToken')
         .notEmpty()
         .withMessage('reCAPTCHA token is required')
@@ -112,12 +118,20 @@ router.post('/', registrationValidation, async (req, res) => {
         // Check for validation errors
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            // Dev-only logging to help diagnose bad requests (safe to enable only outside production)
+            if (process.env.NODE_ENV !== 'production' && process.env.SILENT_LOGS !== 'true') {
+                console.debug('Validation errors for /api/registration:', errors.array());
+                console.debug('Request body:', req.body);
+            }
+
             return res.status(400).json({
                 success: false,
                 message: 'Validation failed',
                 errors: errors.array().map(err => ({
                     field: err.path,
-                    message: err.msg
+                    message: err.msg,
+                    // include the submitted value to make it easier to debug client/server mismatches
+                    value: typeof req.body === 'object' && req.body ? req.body[err.path] : undefined
                 }))
             });
         }

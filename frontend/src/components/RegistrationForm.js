@@ -97,7 +97,8 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
       case 'fullName':
         if (!value.trim()) error = 'Full Name is required.';
         else if (value.trim().length < 3) error = 'Full Name must be at least 3 characters.';
-        else if (!/^[a-zA-Z\s]+$/.test(value.trim())) error = 'Name should only contain letters and spaces.';
+        // Allow unicode letters, spaces and common name punctuation (.,' -)
+        else if (!/^[\p{L}\s.'-]+$/u.test(value.trim())) error = 'Name contains invalid characters.';
         break;
       case 'email':
         if (!value.trim()) error = 'College Email ID is required.';
@@ -105,7 +106,10 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
         break;
       case 'phone':
         if (!value.trim()) error = 'Phone Number is required.';
-        else if (!/^\d{10}$/.test(value.trim())) error = 'Phone Number must be exactly 10 digits.';
+        else {
+          const digits = value.replace(/[^0-9]/g, '');
+          if (digits.length < 10 || digits.length > 15) error = 'Phone number must contain between 10 and 15 digits.';
+        }
         break;
       case 'branch':
         if (!value) error = 'Please select your branch.';
@@ -216,8 +220,17 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
       if (process.env.NODE_ENV !== 'production') {
         console.error('Registration error (full):', error);
         console.debug('Server response data:', error.response?.data);
+        if (Array.isArray(error.response?.data?.errors)) {
+          try {
+            console.groupCollapsed('API validation errors');
+            console.table(error.response.data.errors.map(e => ({ field: e.field, message: e.message, value: e.value })));
+            console.groupEnd();
+          } catch (inner) {
+            console.debug('Could not print table of errors', inner);
+          }
+        }
       }
-      
+
       // Check if it's a maintenance mode error
       if (error.response?.status === 503) {
         setMaintenanceMode(true);
@@ -225,11 +238,15 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
         toast.error('Registration is temporarily unavailable');
         return;
       }
-      
+
       if (error.response?.data?.errors) {
         const apiErrors = {};
         error.response.data.errors.forEach(err => {
           apiErrors[err.field] = err.message;
+          // In dev show a toast for each field error (helps quick debugging)
+          if (process.env.NODE_ENV !== 'production') {
+            toast.error(`${err.field}: ${err.message}`);
+          }
         });
         setErrors(apiErrors);
         toast.error('Please correct the highlighted errors.');
@@ -438,7 +455,7 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  maxLength="10"
+                    // allow longer inputs (country codes, separators) — validation will strip non-digits
                   className={`w-full px-4 py-3.5 bg-secondary-900/50 border ${errors.phone ? 'border-red-700/50' : 'border-secondary-700'} rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 backdrop-blur-sm`}
                   placeholder="1234567890"
                 />
