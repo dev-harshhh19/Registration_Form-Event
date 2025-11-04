@@ -125,32 +125,33 @@ router.post('/', registrationValidation, async (req, res) => {
         const { recaptchaToken, ...formData } = req.body;
 
         // Verify reCAPTCHA token
-        if (!recaptchaToken) {
-            return res.status(400).json({ success: false, message: 'reCAPTCHA token is missing.' });
-        }
+        // Allow skipping verification in non-production when RECAPTCHA_SECRET_KEY is not set
+        const recaptchaDisabledInDev = process.env.NODE_ENV !== 'production' && !process.env.RECAPTCHA_SECRET_KEY;
 
-        try {
-            // Use form-encoded POST to verify token (recommended by Google)
-            const params = new URLSearchParams();
-            params.append('secret', process.env.RECAPTCHA_SECRET_KEY || '');
-            params.append('response', recaptchaToken);
-
-            const recaptchaResponse = await axios.post('https://www.google.com/recaptcha/api/siteverify', params.toString(), {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                timeout: 5000
-            });
-
-            const { success, score } = recaptchaResponse.data;
-
-            if (!success || (typeof score === 'number' && score < 0.5)) {
-                console.warn('reCAPTCHA verification failed:', recaptchaResponse.data);
-                return res.status(400).json({ success: false, message: 'reCAPTCHA verification failed. Please try again.' });
+        if (!recaptchaDisabledInDev) {
+            if (!recaptchaToken) {
+                return res.status(400).json({ success: false, message: 'reCAPTCHA token is missing.' });
             }
-        } catch (recaptchaError) {
-            console.error('reCAPTCHA verification error:', recaptchaError);
-            return res.status(500).json({ success: false, message: 'Internal server error during reCAPTCHA verification.' });
+
+            try {
+                const recaptchaVerifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`;
+                const recaptchaResponse = await axios.post(recaptchaVerifyUrl);
+                const { success, score } = recaptchaResponse.data;
+
+                if (!success || (typeof score !== 'undefined' && score < 0.5)) { // Adjust score threshold as needed (0.0 to 1.0)
+                    console.warn('reCAPTCHA verification failed:', recaptchaResponse.data);
+                    return res.status(400).json({ success: false, message: 'reCAPTCHA verification failed. Please try again.' });
+                }
+            } catch (recaptchaError) {
+                console.error('reCAPTCHA verification error:', recaptchaError?.message || recaptchaError);
+                return res.status(500).json({ success: false, message: 'Internal server error during reCAPTCHA verification.' });
+            }
+        } else {
+            // In development without a secret key, skip verification so local testing can proceed
+            // Do not log sensitive details when skipping
         }
 
+        // Extract data from request
         // Extract data from request
         const {
             fullName,
