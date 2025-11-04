@@ -444,14 +444,6 @@ const dbOperations = {
         return { changes: result.modifiedCount };
     },
     
-    // Update admin 2FA usage
-    updateAdmin2FA: async (id) => {
-        const result = await AdminUser.updateOne(
-            { _id: id }, 
-            { $set: { two_factor_last_used: Date.now(), last_login: Date.now() } }
-        );
-        return { changes: result.modifiedCount };
-    }
 };
 
 module.exports = {
