@@ -147,12 +147,9 @@ router.post('/', registrationValidation, async (req, res) => {
                 return res.status(500).json({ success: false, message: 'Internal server error during reCAPTCHA verification.' });
             }
         } else {
-            // In development without a secret key, skip verification so local testing can proceed
-            // Do not log sensitive details when skipping
+
         }
 
-        // Extract data from request
-        // Extract data from request
         const {
             fullName,
             email,
