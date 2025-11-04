@@ -11,9 +11,12 @@ import axios from 'axios'; // Import axios
 import './App.css';
 
 // Set default base URL for Axios based on environment
-axios.defaults.baseURL = process.env.NODE_ENV === 'production' 
-  ? process.env.REACT_APP_API_BASE_URL 
-  : 'http://localhost:3000'; // Default to backend port for development
+// Prefer an explicit REACT_APP_API_BASE_URL when provided (e.g. during deploy).
+// If it's not provided, use localhost in development, otherwise use a relative path
+// so the frontend will talk to the same origin (recommended for many hosting setups).
+axios.defaults.baseURL = process.env.REACT_APP_API_BASE_URL ?? (
+  process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : ''
+);
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

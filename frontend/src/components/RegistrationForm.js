@@ -70,7 +70,15 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
         const response = await axios.get('/api/seminar-info');
         setSeminarInfo(response.data.data);
       } catch (error) {
-        console.error('Failed to fetch seminar info:', error);
+        // If the endpoint is not found (404) it's ok — treat as "coming soon"
+        if (error.response?.status === 404) {
+          console.warn('Seminar info endpoint not found (404) — using fallback');
+          setSeminarInfo(null);
+          return;
+        }
+
+        // Log other errors for debugging but avoid leaking sensitive data
+        console.error('Failed to fetch seminar info:', error.message || error);
       }
     };
 
