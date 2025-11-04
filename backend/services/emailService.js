@@ -70,7 +70,7 @@ const getSeminarSettings = async () => {
 const createTransporter = () => {
     // For development, use Ethereal Email (fake SMTP)
     if (process.env.NODE_ENV === 'development' && !process.env.SMTP_HOST) {
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
             host: 'smtp.ethereal.email',
             port: 587,
             secure: false,
