@@ -6,6 +6,12 @@ const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
 require('dotenv').config();
+// Quiet server logs in production or when SILENT_LOGS=true
+if (process.env.NODE_ENV === 'production' || process.env.SILENT_LOGS === 'true') {
+    ['log', 'info', 'warn', 'error', 'debug'].forEach((m) => {
+        if (console[m]) console[m] = () => {};
+    });
+}
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
@@ -168,10 +174,19 @@ if (process.env.NODE_ENV === 'production') {
 
         // Serve React app for all non-API routes
         app.get('*', (req, res) => {
-            res.sendFile(indexHtml);
+            try {
+                res.sendFile(indexHtml);
+            } catch (err) {
+                // In case of errors during sendFile, respond with a simple message
+                res.status(500).send('Server error while serving frontend');
+            }
         });
     } else {
-        console.warn(`Static build not found at ${indexHtml}. Skipping static file serving. To enable, build the frontend and place files in frontend/build`);
+        // If build is missing, serve a minimal placeholder page instead of throwing ENOENT
+        const placeholder = path.join(__dirname, 'static_placeholder', 'index.html');
+        app.get('*', (req, res) => {
+            res.sendFile(placeholder);
+        });
     }
 }
 
