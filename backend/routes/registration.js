@@ -6,6 +6,13 @@ const axios = require('axios');
 
 const router = express.Router();
 
+// Basic sanitization helper to trim and strip dangerous characters
+const sanitizeString = (value) => {
+    if (typeof value !== 'string') return value;
+    // Remove HTML-like tags and control characters
+    return value.replace(/<[^>]*>/g, '').replace(/[\u0000-\u001f\u007f]/g, '').trim();
+};
+
 // Validation rules
 const registrationValidation = [
     body('fullName')
@@ -148,6 +155,16 @@ router.post('/', registrationValidation, async (req, res) => {
             consent
         } = formData;
 
+        // Sanitize user-provided values to reduce XSS/NoSQL-injection risk
+        const sFullName = sanitizeString(fullName);
+        const sEmail = sanitizeString(email).toLowerCase();
+        const sPhone = sanitizeString(phone).replace(/[^0-9]/g, '');
+        const sBranch = sanitizeString(branch);
+        const sYear = sanitizeString(yearOfStudy);
+        const sWorkshop = sanitizeString(workshopAttendance);
+        const sGithub = sanitizeString(githubUsername);
+        const sConsent = !!consent;
+
         // Check if email already exists
         const existingRegistration = await dbOperations.getRegistrationByEmail(email);
         if (existingRegistration) {
@@ -159,14 +176,14 @@ router.post('/', registrationValidation, async (req, res) => {
 
         // Add IP address and user agent
         const registrationData = {
-            fullName,
-            email,
-            phone,
-            branch,
-            yearOfStudy,
-            workshopAttendance,
-            githubUsername,
-            consent,
+            fullName: sFullName,
+            email: sEmail,
+            phone: sPhone,
+            branch: sBranch,
+            yearOfStudy: sYear,
+            workshopAttendance: sWorkshop,
+            githubUsername: sGithub,
+            consent: sConsent,
             ipAddress: req.ip || req.connection.remoteAddress,
             userAgent: req.get('User-Agent')
         };
