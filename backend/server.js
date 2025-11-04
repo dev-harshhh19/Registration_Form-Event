@@ -21,12 +21,21 @@ const { initDatabase, dbOperations } = require('./database/database');
 const { sendWelcomeEmail } = require('./services/emailService');
 
 // Security middleware
+// Build CSP lists conditionally (more strict in production)
+const defaultScriptSrc = process.env.NODE_ENV === 'production'
+    ? ["'self'", "https://cdn.tailwindcss.com", "https://unpkg.com"]
+    : ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com", "http://localhost:3001"];
+
+const defaultStyleSrc = process.env.NODE_ENV === 'production'
+    ? ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"]
+    : ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"];
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://unpkg.com", "http://localhost:3001"],
+            styleSrc: defaultStyleSrc,
+            scriptSrc: defaultScriptSrc,
             fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
             imgSrc: ["'self'", "data:", "https:"],
         },
