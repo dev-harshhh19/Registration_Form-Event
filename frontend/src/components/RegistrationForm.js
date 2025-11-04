@@ -150,6 +150,15 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Simple client-side sanitization to remove tags and trim inputs
+  const sanitizeInput = (value) => {
+    if (typeof value === 'string') {
+      // remove any HTML tags and excessive whitespace
+      return value.replace(/<[^>]*>?/gm, '').trim();
+    }
+    return value;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -182,7 +191,14 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
         return;
       }
       
-      const response = await axios.post('/api/registration', { ...formData, recaptchaToken });
+      // Sanitize form data before sending to backend
+      const sanitized = {};
+      Object.keys(formData).forEach((k) => {
+        const v = formData[k];
+        sanitized[k] = typeof v === 'boolean' ? v : sanitizeInput(v);
+      });
+
+      const response = await axios.post('/api/registration', { ...sanitized, recaptchaToken });
       
       if (response.data.success) {
         setShowSuccess(true);
