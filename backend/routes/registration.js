@@ -130,11 +130,19 @@ router.post('/', registrationValidation, async (req, res) => {
         }
 
         try {
-            const recaptchaVerifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`;
-            const recaptchaResponse = await axios.post(recaptchaVerifyUrl);
+            // Use form-encoded POST to verify token (recommended by Google)
+            const params = new URLSearchParams();
+            params.append('secret', process.env.RECAPTCHA_SECRET_KEY || '');
+            params.append('response', recaptchaToken);
+
+            const recaptchaResponse = await axios.post('https://www.google.com/recaptcha/api/siteverify', params.toString(), {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                timeout: 5000
+            });
+
             const { success, score } = recaptchaResponse.data;
 
-            if (!success || score < 0.5) { // Adjust score threshold as needed (0.0 to 1.0)
+            if (!success || (typeof score === 'number' && score < 0.5)) {
                 console.warn('reCAPTCHA verification failed:', recaptchaResponse.data);
                 return res.status(400).json({ success: false, message: 'reCAPTCHA verification failed. Please try again.' });
             }
