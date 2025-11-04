@@ -212,7 +212,11 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
         toast.error(response.data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      // In development, print full server error payload to help debugging
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Registration error (full):', error);
+        console.debug('Server response data:', error.response?.data);
+      }
       
       // Check if it's a maintenance mode error
       if (error.response?.status === 503) {
@@ -231,7 +235,8 @@ const RegistrationFormContent = ({ recaptchaLoaded, executeRecaptcha }) => {
         toast.error('Please correct the highlighted errors.');
       } else {
         const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
-        toast.error(errorMessage);
+        // Show detailed message in dev, but keep friendly message in production
+        toast.error(process.env.NODE_ENV !== 'production' ? `${errorMessage} (${JSON.stringify(error.response?.data)})` : errorMessage);
       }
     } finally {
       setIsSubmitting(false);
