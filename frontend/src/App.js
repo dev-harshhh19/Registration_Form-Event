@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import RegistrationForm from './components/RegistrationForm';
@@ -94,10 +94,7 @@ function AppContent() {
 
 // App with Auth Provider
 function App() {
-  // Log the reCAPTCHA key for debugging
-  useEffect(() => {
-    console.log('reCAPTCHA site key from env:', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
-  }, []);
+  // Note: do not print reCAPTCHA site key to console in production for noise/privacy
 
   return (
     <AuthProvider>

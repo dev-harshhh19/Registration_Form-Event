@@ -35,10 +35,7 @@ const RegistrationForm = () => {
     return () => clearTimeout(timer);
   }, [recaptchaLoaded]);
 
-  // Log the reCAPTCHA key being used
-  useEffect(() => {
-    console.log('reCAPTCHA site key from env:', process.env.REACT_APP_RECAPTCHA_SITE_KEY);
-  }, []);
+  // Do not log reCAPTCHA site key to console to avoid noise
 
   return <RegistrationFormContent recaptchaLoaded={recaptchaLoaded} executeRecaptcha={executeRecaptcha} />;
 };

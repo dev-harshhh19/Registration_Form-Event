@@ -157,15 +157,22 @@ app.use('/api', (req, res, next) => {
     next();
 });
 
-// Serve static files from React app in production
+// Serve static files from React app in production if build exists
+const fs = require('fs');
 if (process.env.NODE_ENV === 'production') {
     const buildPath = path.join(__dirname, '..', 'frontend', 'build');
-    app.use(express.static(buildPath));
-    
-    // Serve React app for all non-API routes
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(buildPath, 'index.html'));
-    });
+    const indexHtml = path.join(buildPath, 'index.html');
+
+    if (fs.existsSync(indexHtml)) {
+        app.use(express.static(buildPath));
+
+        // Serve React app for all non-API routes
+        app.get('*', (req, res) => {
+            res.sendFile(indexHtml);
+        });
+    } else {
+        console.warn(`Static build not found at ${indexHtml}. Skipping static file serving. To enable, build the frontend and place files in frontend/build`);
+    }
 }
 
 // Initialize database and start server
